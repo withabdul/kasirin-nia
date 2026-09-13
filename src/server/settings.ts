@@ -6,8 +6,8 @@ import { settings } from '../db/schema.ts'
 import type { StoreSettings } from '../lib/types.ts'
 
 const DEFAULTS: StoreSettings = {
-  storeName: 'Kopi Senja',
-  outlet: 'Cabang Kemang',
+  storeName: 'Rontjeu',
+  outlet: '',
   cashier: 'Abdul',
   lowStockThreshold: 10,
   footer: 'Terima kasih sudah mampir :)',

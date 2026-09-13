@@ -56,11 +56,12 @@ Detail teknis ekspor:
 bun install
 cp .env.example .env.local     # isi DATABASE_URL
 bun run db:push                # bikin tabel
-bun run db:seed                # data contoh (kopi shop)
+bun run db:import-inventory    # isi katalog dari catatan stok toko
 bun --bun run dev              # http://localhost:3000
 ```
 
-`bun run db:seed --force` untuk reset data contoh.
+`bun run db:import-inventory` untuk isi katalog, `bun run db:clear-demo` untuk
+mulai dari nol (hapus transaksi + pelanggan, produk tetap).
 Build + jalankan mode produksi lokal: `bun run build && bun run start`.
 
 ### Katalog
@@ -82,7 +83,9 @@ Angka dalam tanda kurung di catatan = **jumlah stok**, bukan harga. Harga hanya
 tertulis untuk dua item (Kaos Kaki 12.000 dan 10.000); sisanya `0` dan diisi
 lewat Katalog — bukan ditebak.
 
-`db:seed` masih ada untuk data demo (kedai kopi) kalau butuh contoh transaksi.
+`db:clear-demo` untuk mengosongkan transaksi + pelanggan (mulai dari nol) tanpa
+menyentuh katalog — sekaligus mengembalikan nomor struk ke INV-1001.
+
 Import inventory memakai `DELETE` bukan `TRUNCATE CASCADE`, supaya riwayat
 transaksi lama tetap tersimpan (nama produk di `order_items` tidak hilang).
 

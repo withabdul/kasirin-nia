@@ -47,7 +47,10 @@ function LaporanPage() {
           <div style={{ flex: 1, minWidth: 200 }}>
             <h1 className="pagehead__title">Laporan</h1>
             <p className="pagehead__desc">
-              Ringkasan {settings.storeName} · {settings.outlet}
+              Ringkasan{' '}
+              {settings.outlet
+                ? `${settings.storeName} · ${settings.outlet}`
+                : settings.storeName}
             </p>
           </div>
           <ExportCsvButton

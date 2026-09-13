@@ -41,7 +41,7 @@ export function AppShell({
           </div>
           <div style={{ minWidth: 0 }}>
             <div className="sidebar__store">{storeName}</div>
-            <div className="sidebar__outlet">{outlet}</div>
+            {outlet ? <div className="sidebar__outlet">{outlet}</div> : null}
           </div>
         </div>
 
@@ -97,7 +97,7 @@ export function AppShell({
             <div style={{ minWidth: 0 }}>
               <div className="topbar__name">{current?.label ?? storeName}</div>
               <div className="topbar__sub">
-                {storeName} · {outlet}
+                {outlet ? `${storeName} · ${outlet}` : storeName}
               </div>
             </div>
           </div>

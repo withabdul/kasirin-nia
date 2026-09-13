@@ -714,7 +714,7 @@ function ReceiptLayer({
       <div className="receipt">
         <div className="receipt__store">
           <strong>{settings.storeName}</strong>
-          <div>{settings.outlet}</div>
+          {settings.outlet ? <div>{settings.outlet}</div> : null}
           <div>{dateTime(order.createdAt)}</div>
           <div>
             {order.code} · kasir {settings.cashier}
