@@ -40,6 +40,7 @@ bun --bun run dev              # http://localhost:3000
 ```
 
 `bun run db:seed --force` untuk reset data contoh.
+Build + jalankan mode produksi lokal: `bun run build && bun run start`.
 
 ### DATABASE_URL
 
@@ -56,19 +57,33 @@ atau publish portnya (`127.0.0.1:5433:5432`) supaya bisa pakai `localhost`.
 
 ## Deploy (Docker + Traefik)
 
+**Live:** https://pos-nia.berkoding.com (Traefik → container `kasirin:3000`, TLS via
+Cloudflare di depan origin).
+
 Repo ini nempel ke network Traefik yang sudah ada (`traefik-net`, external) dan
 mendapat TLS lewat certresolver `letsencrypt` — pola labelnya sama dengan service
 lain di server.
 
 ```bash
-cp .env.example .env      # DATABASE_URL untuk container
+cp .env.example .env      # DATABASE_URL + DOMAIN
 docker compose up -d --build
 ```
 
-Ganti `kasirin.${DOMAIN}` di `docker-compose.yml` kalau hostnya beda. Karena
-app-nya jalan di host yang sama dengan container Postgres, `DATABASE_URL` bisa
-pakai IP container di atas, atau `postgres:5432` kalau app-nya juga ikut masuk
-`traefik-net` (compose di sini sudah begitu).
+Karena app-nya ikut masuk `traefik-net`, `DATABASE_URL` cukup pakai hostname
+container Postgres: `postgresql://kasirin:<password>@postgres:5432/kasirin`.
+
+Ganti `Host(...)` di `docker-compose.yml` kalau domainnya beda. Cek statusnya:
+
+```bash
+docker compose ps
+docker logs kasirin --tail 20
+curl -sS -o /dev/null -w '%{http_code}\n' https://pos-nia.berkoding.com/kasir
+```
+
+Runtime-nya Node, jadi build **wajib** pakai preset Nitro `node-server`
+(`"build": "NITRO_PRESET=node-server vite build"`). Kalau di-build lewat
+`bun run build` tanpa preset itu, Nitro mendeteksi Bun dan meng-output entry
+`Bun.serve` yang langsung crash di `node .output/server/index.mjs`.
 
 ## Struktur
 

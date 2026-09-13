@@ -14,7 +14,7 @@ services:
       - traefik-net
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.kasirin.rule=Host(`kasirin.${DOMAIN}`)"
+      - "traefik.http.routers.kasirin.rule=Host(`pos-nia.berkoding.com`)"
       - "traefik.http.routers.kasirin.entrypoints=websecure"
       - "traefik.http.routers.kasirin.tls.certresolver=letsencrypt"
       - "traefik.http.services.kasirin.loadbalancer.server.port=3000"
