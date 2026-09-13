@@ -108,7 +108,7 @@
   padding-top: 10px;
   border-top: 1px solid var(--border);
   font-size: 11.5px;
-  color: var(--faint);
+  color: var(--muted);
   letter-spacing: .02em;
 }
 .brandline strong {
@@ -133,6 +133,7 @@
   line-height: 1.4;
 }
 .form-note .ico { width: 17px; height: 17px; flex: none; margin-top: 1px; }
+.form-note--info { background: var(--info-soft); color: var(--info); }
 
 .taginput {
   display: flex;

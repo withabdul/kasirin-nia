@@ -39,7 +39,7 @@ export function AppShell({
           <div className="brandmark" aria-hidden="true">
             {mark}
           </div>
-          <div style={{ minWidth: 0 }}>
+          <div className="min0">
             <div className="sidebar__store">{storeName}</div>
             {outlet ? <div className="sidebar__outlet">{outlet}</div> : null}
           </div>
@@ -69,8 +69,7 @@ export function AppShell({
           </div>
           <button
             type="button"
-            className="btn btn--quiet btn--block btn--sm"
-            style={{ marginTop: 8 }}
+            className="btn btn--quiet btn--block btn--sm mt-8"
             onClick={() => setSettingsOpen(true)}
           >
             <Icon name="gear" className="ico--sm" />
@@ -94,7 +93,7 @@ export function AppShell({
             <div className="brandmark" aria-hidden="true">
               {mark}
             </div>
-            <div style={{ minWidth: 0 }}>
+            <div className="min0">
               <div className="topbar__name">{current?.label ?? storeName}</div>
               <div className="topbar__sub">
                 {outlet ? `${storeName} · ${outlet}` : storeName}

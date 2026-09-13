@@ -5,6 +5,7 @@ import { Field, Layer } from '../components/Layer.tsx'
 import { useToast } from '../components/Toast.tsx'
 import { dateTime, initials, rp } from '../lib/format.ts'
 import { Icon } from '../lib/icons.tsx'
+import { stockLevel } from '../lib/stock.ts'
 import type {
   CartLine,
   Customer,
@@ -260,12 +261,11 @@ function KasirPage() {
 
   return (
     <div className="view is-active">
-      <div className="pagehead" style={{ display: 'none' }} aria-hidden="true" />
       <div className="pos">
         <div className="pos__catalog">
           <div className="postools">
             <div className="postools__bar">
-              <div className="search" style={{ flex: 1 }}>
+              <div className="search spacer">
                 <Icon name="search" />
                 <input
                   className="input"
@@ -316,29 +316,33 @@ function KasirPage() {
             <div className="pgrid">
               {visible.map((p) => {
                 const q = inCart(p.id)
+                const level = stockLevel(p.stock, settings.lowStockThreshold)
+                const priced = p.price > 0
                 return (
                   <button
                     key={p.id}
                     type="button"
-                    className={`ptile${p.stock <= 0 ? ' is-out' : ''}${flash === p.id ? ' is-flash' : ''}`}
+                    className={`ptile${level === 'out' ? ' is-out' : ''}${flash === p.id ? ' is-flash' : ''}`}
                     onClick={() => addToCart(p)}
-                    aria-label={`Tambah ${p.name} ke keranjang`}
+                    aria-label={
+                      level === 'out'
+                        ? `${p.name} stok habis`
+                        : `Tambah ${p.name} ke keranjang`
+                    }
                   >
                     {q > 0 ? <span className="ptile__qty">{q}</span> : null}
                     <span className="ptile__cat">{p.category}</span>
                     <span className="ptile__name">{p.name}</span>
                     <span className="ptile__foot">
-                      <span className="ptile__price num">{rp(p.price)}</span>
+                      {priced ? (
+                        <span className="ptile__price num">{rp(p.price)}</span>
+                      ) : (
+                        <span className="noprice">Tanpa harga</span>
+                      )}
                       <span
-                        className={`ptile__stock${
-                          p.stock <= 0
-                            ? ' is-out'
-                            : p.stock <= settings.lowStockThreshold
-                              ? ' is-low'
-                              : ''
-                        }`}
+                        className={`ptile__stock stocktier${level === 'ok' ? '' : ` is-${level}`}`}
                       >
-                        {p.stock <= 0 ? 'habis' : `${p.stock} ${p.unit}`}
+                        {level === 'out' ? 'habis' : `${p.stock} ${p.unit}`}
                       </span>
                     </span>
                   </button>
@@ -353,7 +357,7 @@ function KasirPage() {
             <div className="cartpanel__head">
               <span className="cartpanel__title">Pesanan</span>
               <span className="pill pill--accent">{itemCount} item</span>
-              <div style={{ flex: 1 }} />
+              <div className="spacer" />
               <button
                 className="icon-btn icon-btn--sm"
                 type="button"
@@ -386,13 +390,9 @@ function KasirPage() {
             <Icon name="cart" />
             <span className="cartbar__n num">{itemCount}</span>
           </span>
-          <span className="cartbar__info" style={{ textAlign: 'left' }}>
+          <span className="cartbar__info">
             <span className="cartbar__label">Total</span>
-            <span
-              className="cartbar__total"
-              style={{ display: 'block' }}
-              aria-live="polite"
-            >
+            <span className="cartbar__total" aria-live="polite">
               {rp(subtotal)}
             </span>
           </span>
@@ -597,7 +597,7 @@ function CheckoutLayer({
               value={paid || ''}
               onChange={(e) => setPaid(Math.max(0, Number(e.target.value) || 0))}
             />
-            <div className="chiprow" style={{ margin: 0, padding: 0 }}>
+            <div className="chiprow chiprow--flush">
               {quick.map((v) => (
                 <button
                   key={v}

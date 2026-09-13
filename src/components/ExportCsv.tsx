@@ -118,7 +118,7 @@ export function ExportCsvButton({
             <div className="card">
               <div className="card__head">
                 <div className="card__title">Pratinjau</div>
-                <div style={{ flex: 1 }} />
+                <div className="spacer" />
                 <span
                   className={`pill ${rowCount === 0 ? 'pill--warn' : 'pill--accent'}`}
                 >
@@ -167,7 +167,7 @@ export function ExportCsvButton({
                       </table>
                     </div>
                     {rowCount > 3 ? (
-                      <p className="text-xs text-muted" style={{ marginTop: 8 }}>
+                      <p className="text-xs text-muted mt-8">
                         +{rowCount - 3} baris lagi di file.
                       </p>
                     ) : null}
@@ -176,7 +176,7 @@ export function ExportCsvButton({
               </div>
             </div>
 
-            <div className="form-note" style={{ background: 'var(--info-soft)', color: 'var(--info)' }}>
+            <div className="form-note form-note--info">
               <Icon name="alert" />
               <span>
                 Angka ditulis polos (22000) biar bisa langsung dijumlah di

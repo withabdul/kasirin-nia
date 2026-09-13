@@ -89,15 +89,8 @@ function CrmPage() {
   return (
     <div className="view is-active">
       <div className="pagehead">
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-end',
-            gap: 12,
-            flexWrap: 'wrap',
-          }}
-        >
-          <div style={{ flex: 1, minWidth: 200 }}>
+        <div className="pagehead__row">
+          <div className="pagehead__lead">
             <h1 className="pagehead__title">Pelanggan</h1>
             <p className="pagehead__desc">
               {customers.length} pelanggan · {visible.length} tampil
@@ -199,7 +192,7 @@ function CrmPage() {
       </div>
 
       <div className="catalogbar">
-        <div className="chiprow" style={{ margin: 0, padding: 0 }}>
+        <div className="chiprow chiprow--flush">
           {(['Semua', ...TIERS] as const).map((t) => (
             <button
               key={t}
@@ -219,15 +212,51 @@ function CrmPage() {
       </div>
 
       {visible.length === 0 ? (
-        <div className="empty">
-          <span className="empty__mark">
-            <Icon name="users" />
-          </span>
-          <p className="empty__title">Belum ada pelanggan di filter ini</p>
-          <p className="empty__desc">
-            Simpan pelanggan saat pembayaran, atau tambah manual di sini.
-          </p>
-        </div>
+        customers.length === 0 ? (
+          <div className="empty">
+            <span className="empty__mark">
+              <Icon name="users" />
+            </span>
+            <p className="empty__title">Belum ada pelanggan</p>
+            <p className="empty__desc">
+              Simpan pelanggan saat pembayaran di kasir, atau tambah manual di
+              sini.
+            </p>
+            <div className="empty__action">
+              <button
+                className="btn btn--primary"
+                type="button"
+                onClick={() => setDraft({ id: null, form: { ...EMPTY } })}
+              >
+                <Icon name="plus" />
+                Pelanggan baru
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="empty">
+            <span className="empty__mark">
+              <Icon name="search" />
+            </span>
+            <p className="empty__title">Tidak ada pelanggan yang cocok</p>
+            <p className="empty__desc">
+              Coba kata kunci lain, atau kembalikan filter tier ke Semua.
+            </p>
+            <div className="empty__action">
+              <button
+                className="btn btn--ghost"
+                type="button"
+                onClick={() => {
+                  setQuery('')
+                  setTier('Semua')
+                }}
+              >
+                <Icon name="refresh" />
+                Reset filter
+              </button>
+            </div>
+          </div>
+        )
       ) : (
         <div className="crmgrid">
           {visible.map((c) => (
@@ -239,7 +268,7 @@ function CrmPage() {
             >
               <div className="ccard__top">
                 <span className="avatar">{initials(c.name)}</span>
-                <div style={{ minWidth: 0, flex: 1 }}>
+                <div className="min0 spacer">
                   <div className="ccard__name">{c.name}</div>
                   <div className="ccard__contact">
                     {c.phone || c.email || 'Belum ada kontak'}
@@ -388,22 +417,18 @@ function CustomerDetail({
     >
       <div className="cdetail__head">
         <span className="avatar avatar--lg">{initials(customer.name)}</span>
-        <div style={{ minWidth: 0 }}>
+        <div className="min0">
           <div className="cdetail__name">{customer.name}</div>
           <div className="cdetail__contact">
             <span className={tierClass(customer.tier)}>{customer.tier}</span>
             {customer.phone ? (
-              <span
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
-              >
+              <span className="iconline">
                 <Icon name="phone" className="ico--sm" />
                 {customer.phone}
               </span>
             ) : null}
             {customer.email ? (
-              <span
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
-              >
+              <span className="iconline">
                 <Icon name="mail" className="ico--sm" />
                 {customer.email}
               </span>
@@ -430,7 +455,7 @@ function CustomerDetail({
       </div>
 
       {customer.orderCount > 0 ? (
-        <p className="text-sm text-muted" style={{ marginBottom: 16 }}>
+        <p className="text-sm text-muted mb-16">
           Rata-rata belanja{' '}
           <strong className="num">
             {rp(customer.totalSpent / customer.orderCount)}
@@ -438,13 +463,13 @@ function CustomerDetail({
           per transaksi · pelanggan sejak {dateLong(customer.createdAt)}.
         </p>
       ) : (
-        <p className="text-sm text-muted" style={{ marginBottom: 16 }}>
+        <p className="text-sm text-muted mb-16">
           Belum ada transaksi tercatat untuk pelanggan ini.
         </p>
       )}
 
       {customer.tags.length ? (
-        <div className="ccard__tags" style={{ marginBottom: 16 }}>
+        <div className="ccard__tags mb-16">
           {customer.tags.map((t) => (
             <span className="pill" key={t}>
               {t}

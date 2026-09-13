@@ -4,6 +4,7 @@ import { ExportCsvButton } from '../components/ExportCsv.tsx'
 import { csvDate, csvFilename, SEPARATORS } from '../lib/csv.ts'
 import { dateTime, dayKey, num, relDay, rp } from '../lib/format.ts'
 import { Icon } from '../lib/icons.tsx'
+import { stockLevel } from '../lib/stock.ts'
 import { getStats, listOrders } from '../server/orders.ts'
 import { getSettings } from '../server/settings.ts'
 
@@ -13,6 +14,9 @@ const RANGES = [
   { value: '30', label: '30 hari terakhir' },
   { value: 'all', label: 'Semua transaksi' },
 ]
+
+/** How many low-stock lines the report shows before handing off to katalog. */
+const LOW_STOCK_PREVIEW = 6
 
 export const Route = createFileRoute('/laporan')({
   loader: async () => {
@@ -36,15 +40,8 @@ function LaporanPage() {
   return (
     <div className="view is-active">
       <div className="pagehead">
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-end',
-            gap: 12,
-            flexWrap: 'wrap',
-          }}
-        >
-          <div style={{ flex: 1, minWidth: 200 }}>
+        <div className="pagehead__row">
+          <div className="pagehead__lead">
             <h1 className="pagehead__title">Laporan</h1>
             <p className="pagehead__desc">
               Ringkasan{' '}
@@ -219,7 +216,7 @@ function LaporanPage() {
                 Penjualan harian, hari ini disorot
               </div>
             </div>
-            <div style={{ flex: 1 }} />
+            <div className="spacer" />
             <span className="pill pill--accent">
               {rp(stats.series.reduce((t, s) => t + s.total, 0))}
             </span>
@@ -251,11 +248,11 @@ function LaporanPage() {
           <div className="card">
             <div className="card__head">
               <div className="card__title">Produk terlaris</div>
-              <div style={{ flex: 1 }} />
+              <div className="spacer" />
               <span className="card__sub">sepanjang waktu</span>
             </div>
             {stats.top.length === 0 ? (
-              <div className="empty" style={{ padding: '26px 18px' }}>
+              <div className="empty empty--tight">
                 <p className="empty__title">Belum ada penjualan</p>
               </div>
             ) : (
@@ -283,51 +280,67 @@ function LaporanPage() {
           <div className="card">
             <div className="card__head">
               <div className="card__title">Stok menipis</div>
-              <div style={{ flex: 1 }} />
+              <div className="spacer" />
               <span className="card__sub">
-                ≤ {settings.lowStockThreshold} unit
+                {stats.lowStock.length} produk · ≤ {settings.lowStockThreshold}{' '}
+                unit
               </span>
             </div>
             {stats.lowStock.length === 0 ? (
-              <div className="empty" style={{ padding: '26px 18px' }}>
+              <div className="empty empty--tight">
                 <span className="empty__mark">
                   <Icon name="check" />
                 </span>
                 <p className="empty__title">Semua stok aman</p>
               </div>
             ) : (
+              /* lowStock arrives sorted by stock ascending, so the six shown
+                 are the six closest to running out */
               <div>
-                {stats.lowStock.map((p) => (
-                  <div className="rowitem" key={p.id}>
-                    <span className="prodthumb">{p.sku.slice(-3)}</span>
-                    <div className="rowitem__main">
-                      <div className="rowitem__title">{p.name}</div>
-                      <div className="rowitem__meta">{p.category}</div>
+                {stats.lowStock.slice(0, LOW_STOCK_PREVIEW).map((p) => {
+                  const level = stockLevel(p.stock, settings.lowStockThreshold)
+                  const urgent = level === 'critical' || level === 'out'
+                  return (
+                    <div className="rowitem" key={p.id}>
+                      <span className="prodthumb">{p.sku.slice(-3)}</span>
+                      <div className="rowitem__main">
+                        <div className="rowitem__title">{p.name}</div>
+                        <div className="rowitem__meta">{p.category}</div>
+                      </div>
+                      <span
+                        className={`pill ${urgent ? 'pill--danger' : 'pill--warn'}`}
+                      >
+                        {level === 'out' ? 'habis' : `${p.stock} ${p.unit}`}
+                      </span>
                     </div>
-                    <span
-                      className={`pill ${p.stock <= 0 ? 'pill--danger' : 'pill--warn'}`}
-                    >
-                      {p.stock <= 0 ? 'habis' : `${p.stock} ${p.unit}`}
-                    </span>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
             <div className="card__foot">
-              <Link to="/katalog" className="btn btn--ghost btn--sm">
+              <Link
+                to="/katalog"
+                search={{ filter: 'Menipis' }}
+                className="btn btn--ghost btn--sm"
+              >
                 <Icon name="box" className="ico--sm" />
-                Kelola katalog
+                Lihat semua di katalog
               </Link>
+              {stats.lowStock.length > LOW_STOCK_PREVIEW ? (
+                <span className="text-xs text-muted">
+                  +{stats.lowStock.length - LOW_STOCK_PREVIEW} lainnya
+                </span>
+              ) : null}
             </div>
           </div>
         </div>
       </div>
 
       <div className="wrap" style={{ paddingBottom: 20 }}>
-        <div className="card" style={{ overflow: 'hidden' }}>
+        <div className="card card--clip">
           <div className="card__head">
             <div className="card__title">Transaksi terakhir</div>
-            <div style={{ flex: 1 }} />
+            <div className="spacer" />
             <Link to="/kasir" className="sec__link">
               Buka kasir
             </Link>

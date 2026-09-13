@@ -7,6 +7,7 @@ import { useToast } from '../components/Toast.tsx'
 import { csvFilename, SEPARATORS } from '../lib/csv.ts'
 import { rp } from '../lib/format.ts'
 import { Icon } from '../lib/icons.tsx'
+import { stockLevel } from '../lib/stock.ts'
 import type { Product, ProductInput } from '../lib/types.ts'
 import {
   createProduct,
@@ -16,7 +17,14 @@ import {
 } from '../server/products.ts'
 import { getSettings } from '../server/settings.ts'
 
+const FILTERS = ['Semua', 'Aktif', 'Nonaktif', 'Menipis'] as const
+type Filter = (typeof FILTERS)[number]
+
 export const Route = createFileRoute('/katalog')({
+  // lets laporan deep-link straight into the "Menipis" view
+  validateSearch: (search: Record<string, unknown>) => ({
+    filter: typeof search.filter === 'string' ? search.filter : undefined,
+  }),
   loader: async () => {
     const [products, settings] = await Promise.all([
       listProducts(),
@@ -47,9 +55,20 @@ function KatalogPage() {
   const confirm = useConfirm()
 
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState<'Semua' | 'Aktif' | 'Nonaktif' | 'Menipis'>(
-    'Semua',
+  const { filter: filterParam } = Route.useSearch()
+  const navigate = Route.useNavigate()
+  // the URL owns the filter, so /katalog?filter=Menipis is shareable and the
+  // chips can never disagree with the address bar
+  const filter: Filter = (FILTERS as readonly string[]).includes(
+    filterParam ?? '',
   )
+    ? (filterParam as Filter)
+    : 'Semua'
+  const setFilter = (f: Filter) =>
+    void navigate({
+      search: { filter: f === 'Semua' ? undefined : f },
+      replace: true,
+    })
   const [draft, setDraft] = useState<Draft | null>(null)
 
   const categories = useMemo(
@@ -137,28 +156,21 @@ function KatalogPage() {
   const maxStock = Math.max(1, ...products.map((p) => p.stock))
 
   const stockCell = (p: Product) => {
-    const cls =
-      p.stock <= 0
+    const level = stockLevel(p.stock, settings.lowStockThreshold)
+    const bar =
+      level === 'critical' || level === 'out'
         ? 'bar--danger'
-        : p.stock <= settings.lowStockThreshold
+        : level === 'low'
           ? 'bar--warn'
           : 'bar--ok'
     return (
       <div className="stockcell">
         <span
-          className="stockcell__n"
-          style={{
-            color:
-              p.stock <= 0
-                ? 'var(--danger)'
-                : p.stock <= settings.lowStockThreshold
-                  ? 'var(--warn)'
-                  : undefined,
-          }}
+          className={`stockcell__n stocktier${level === 'ok' ? '' : ` is-${level}`}`}
         >
           {p.stock} {p.unit}
         </span>
-        <div className={`bar ${cls}`}>
+        <div className={`bar ${bar}`}>
           <span style={{ width: `${Math.max(4, (p.stock / maxStock) * 100)}%` }} />
         </div>
       </div>
@@ -168,15 +180,8 @@ function KatalogPage() {
   return (
     <div className="view is-active">
       <div className="pagehead">
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-end',
-            gap: 12,
-            flexWrap: 'wrap',
-          }}
-        >
-          <div style={{ flex: 1, minWidth: 200 }}>
+        <div className="pagehead__row">
+          <div className="pagehead__lead">
             <h1 className="pagehead__title">Katalog</h1>
             <p className="pagehead__desc">
               {products.length} produk · {visible.length} tampil
@@ -260,8 +265,8 @@ function KatalogPage() {
       </div>
 
       <div className="catalogbar">
-        <div className="chiprow" style={{ margin: 0, padding: 0 }}>
-          {(['Semua', 'Aktif', 'Nonaktif', 'Menipis'] as const).map((f) => (
+        <div className="chiprow chiprow--flush">
+          {FILTERS.map((f) => (
             <button
               key={f}
               type="button"
@@ -294,52 +299,60 @@ function KatalogPage() {
         <>
           {/* mobile: rows */}
           <div className="wrap only-mobile">
-            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-              {visible.map((p) => (
-                <div className="rowitem" key={p.id}>
-                  <span className="prodthumb">{p.sku.slice(-3)}</span>
-                  <button
-                    type="button"
-                    className="rowitem__main"
-                    onClick={() => openEdit(p)}
-                    style={{ textAlign: 'left' }}
-                  >
-                    <div className="rowitem__title">
-                      {p.name}
-                      {!p.active ? (
-                        <span className="pill" style={{ marginLeft: 8 }}>
-                          nonaktif
-                        </span>
-                      ) : null}
+            <div className="card card--clip">
+              {visible.map((p) => {
+                const level = stockLevel(p.stock, settings.lowStockThreshold)
+                return (
+                  <div className="rowitem" key={p.id}>
+                    <span className="prodthumb">{p.sku.slice(-3)}</span>
+                    <button
+                      type="button"
+                      className="rowitem__main"
+                      onClick={() => openEdit(p)}
+                    >
+                      <div className="rowitem__title">
+                        {p.name}
+                        {!p.active ? (
+                          <span className="pill" style={{ marginLeft: 8 }}>
+                            nonaktif
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="rowitem__meta">
+                        <span>{p.category}</span>
+                        <span>·</span>
+                        <span className="num">{p.sku}</span>
+                      </div>
+                    </button>
+                    <div className="rowitem__right">
+                      {p.price > 0 ? (
+                        <div className="rowitem__amt num">{rp(p.price)}</div>
+                      ) : (
+                        <div className="noprice">Tanpa harga</div>
+                      )}
+                      <div
+                        className={`text-xs num stocktier${level === 'ok' ? '' : ` is-${level}`}`}
+                      >
+                        {p.stock} {p.unit}
+                      </div>
                     </div>
-                    <div className="rowitem__meta">
-                      <span>{p.category}</span>
-                      <span>·</span>
-                      <span className="num">{p.sku}</span>
-                    </div>
-                  </button>
-                  <div className="rowitem__right">
-                    <div className="rowitem__amt num">{rp(p.price)}</div>
-                    <div className="text-xs text-muted num">
-                      {p.stock} {p.unit}
-                    </div>
+                    <button
+                      className="icon-btn icon-btn--sm"
+                      type="button"
+                      aria-label={`Edit ${p.name}`}
+                      onClick={() => openEdit(p)}
+                    >
+                      <Icon name="edit" />
+                    </button>
                   </div>
-                  <button
-                    className="icon-btn icon-btn--sm"
-                    type="button"
-                    aria-label={`Edit ${p.name}`}
-                    onClick={() => openEdit(p)}
-                  >
-                    <Icon name="edit" />
-                  </button>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
 
           {/* desktop: table */}
           <div className="wrap only-desktop">
-            <div className="card" style={{ overflow: 'hidden' }}>
+            <div className="card card--clip">
               <div className="tablewrap">
                 <table className="table">
                   <thead>
@@ -365,7 +378,7 @@ function KatalogPage() {
                           >
                             <span className="prodthumb">{p.sku.slice(-3)}</span>
                             <div>
-                              <div style={{ fontWeight: 600 }}>{p.name}</div>
+                              <div className="strong">{p.name}</div>
                               <div className="text-xs text-muted num">
                                 {p.sku}
                                 {!p.active ? ' · nonaktif' : ''}
@@ -376,9 +389,11 @@ function KatalogPage() {
                         <td>
                           <span className="pill">{p.category}</span>
                         </td>
-                        <td className="ta-r num" style={{ fontWeight: 600 }}>
-                          {rp(p.price)}
-                        </td>
+                        {p.price > 0 ? (
+                          <td className="ta-r num strong">{rp(p.price)}</td>
+                        ) : (
+                          <td className="ta-r noprice">Tanpa harga</td>
+                        )}
                         <td className="ta-r num text-muted">{rp(p.cost)}</td>
                         <td>{stockCell(p)}</td>
                         <td>
@@ -604,9 +619,7 @@ function ProductFormLayer({
             onChange={(e) => set('active', e.target.checked)}
           />
           <span>
-            <span className="field__label" style={{ display: 'block' }}>
-              Tampil di kasir
-            </span>
+            <span className="field__label">Tampil di kasir</span>
             <span className="field__hint">
               Matikan kalau produk sedang tidak dijual.
             </span>

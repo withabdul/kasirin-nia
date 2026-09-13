@@ -21,6 +21,7 @@ Drizzle ORM · PostgreSQL · Bun · Nitro. Tanpa Tailwind — CSS ditulis tangan
 - CRUD produk: nama, SKU unik, kategori, harga jual, modal, stok, satuan
 - Margin otomatis di form, indikator stok menipis, aktif/nonaktif
 - Tabel di desktop, list di mobile
+- Filter bisa di-deep-link: `/katalog?filter=Menipis`
 
 **Pelanggan** (`/pelanggan`)
 - CRUD pelanggan: kontak, tier (Basic/Silver/Gold), tag, catatan
@@ -29,7 +30,7 @@ Drizzle ORM · PostgreSQL · Bun · Nitro. Tanpa Tailwind — CSS ditulis tangan
 
 **Laporan** (`/laporan`)
 - Penjualan hari ini, rata-rata per transaksi, estimasi margin, total penjualan
-- Grafik 7 hari, produk terlaris, peringatan stok menipis, transaksi terakhir
+- Grafik 7 hari, produk terlaris, peringatan stok menipis (6 teratas), transaksi terakhir
 
 **Ekspor CSV** — tombol "Ekspor CSV" ada di Katalog, Pelanggan, dan Laporan.
 Semua ekspor lewat layer pratinjau: pilih opsi dulu, lihat jumlah baris + 3 baris
@@ -140,7 +141,8 @@ src/
   routes/      __root, index(→kasir), kasir, katalog, pelanggan, laporan
   components/  AppShell (sidebar + bottom nav), Layer (modal/sheet), Toast,
                ExportCsv (layer pratinjau + download)
-  lib/         types, format (Intl id-ID, TZ Asia/Jakarta), csv, icons (inline SVG)
+  lib/         types, format (Intl id-ID, TZ Asia/Jakarta), csv, icons (inline SVG),
+               stock (tingkat urgensi stok)
   styles/      base / components / views / react — CSS custom properties
 ```
 
@@ -151,3 +153,12 @@ Catatan teknis:
 - Checkout pakai transaksi + `SELECT … FOR UPDATE` supaya stok tidak bentrok.
 - Ekspor CSV dibikin di client dari data loader — tidak ada endpoint tambahan.
 - `src/routes/routeTree.gen.ts` di-generate oleh TanStack Router CLI.
+- Stok punya tiga tingkat (`src/lib/stock.ts`): `habis` (0), `kritis` (≤ 2), dan
+  `menipis` (≤ `lowStockThreshold`). Hanya tingkat kritis yang diberi warna
+  tegas — di toko ini hampir semua produk ada di bawah ambang, jadi alarm yang
+  menyala di mana-mana tidak lagi berarti apa-apa. Ambangnya sendiri tetap
+  dipakai apa adanya untuk filter "Menipis" di Katalog dan daftar di Laporan.
+- Produk yang harganya belum diisi tampil sebagai "Tanpa harga", bukan `Rp0` —
+  harga kosong bukan harga nol.
+- Kartu "Stok menipis" di Laporan menampilkan 6 baris teratas (urut stok
+  terkecil) lalu menautkan ke `/katalog?filter=Menipis`.

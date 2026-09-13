@@ -11,11 +11,11 @@
   --border: #e3dfd5;
   --border-strong: #cdc7b9;
 
-  /* ink */
+  /* ink — --muted is the lightest tone allowed on text: it clears 4.5:1 on
+     --bg, --surface, --surface-2 and --bg-2. Anything lighter is decoration. */
   --ink: #191813;
   --ink-2: #4b4740;
-  --muted: #7d786d;
-  --faint: #a8a294;
+  --muted: #6a655a;
 
   /* accent — burnt orange. Deeper tone carries white text, bright tone is for shapes/icons only */
   --accent: #d1490f;
@@ -47,6 +47,9 @@
   --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
 
   --nav-h: 60px;
+  /* Drives both the topbar's own height and the sticky offset of anything
+     that parks under it. One number, so they can never drift apart. */
+  --topbar-h: 62px;
   --sidebar-w: 252px;
   --pad: 16px;
 
@@ -81,10 +84,33 @@ img { max-width: 100%; display: block; }
 svg { display: block; }
 table { border-collapse: collapse; width: 100%; }
 
+/* The outline follows the element's own radius — never set border-radius here,
+   it would snap every focused control back to a 4px corner. */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 4px;
+}
+
+/* ---------- browser surfaces: the parts we did not draw ---------- */
+::selection {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+input, textarea {
+  caret-color: var(--accent);
+}
+
+/* Themed everywhere so the OS grey never lands in the warm palette; only the
+   inner panes go thin — the page scrollbar stays full width to grab. */
+* {
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.tablewrap,
+.cartpanel__items,
+.layer__body {
+  scrollbar-width: thin;
 }
 
 .ico { width: 20px; height: 20px; flex: none; }
@@ -100,7 +126,24 @@ table { border-collapse: collapse; width: 100%; }
 .text-muted { color: var(--muted); }
 .text-sm { font-size: 13px; }
 .text-xs { font-size: 11.5px; }
+.strong { font-weight: 600; }
 .is-hidden { display: none !important; }
+
+/* A product whose price was never entered is not free. Never print "Rp0" for
+   a missing price — name the gap instead. */
+.noprice {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--warn);
+}
+
+/* layout primitives — the handful of flex shapes that repeat across views */
+.spacer { flex: 1; }
+.min0 { min-width: 0; }
+.iconline { display: inline-flex; align-items: center; gap: 5px; }
+.mt-8 { margin-top: 8px; }
+.mb-16 { margin-bottom: 16px; }
 
 /* ==========================================================================
    App shell
@@ -123,7 +166,8 @@ table { border-collapse: collapse; width: 100%; }
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px var(--pad) 10px;
+  height: var(--topbar-h);
+  padding: 0 var(--pad);
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -190,6 +234,9 @@ table { border-collapse: collapse; width: 100%; }
   line-height: 1.15;
 }
 .pagehead__desc { color: var(--muted); font-size: 13.5px; margin-top: 4px; }
+/* title block + actions, shared by katalog, pelanggan and laporan */
+.pagehead__row { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.pagehead__lead { flex: 1; min-width: 200px; }
 
 /* ---------- bottom nav (mobile) ---------- */
 .navbottom {
@@ -262,7 +309,7 @@ table { border-collapse: collapse; width: 100%; }
    ========================================================================== */
 
 @media (min-width: 920px) {
-  :root { --pad: 26px; }
+  :root { --pad: 26px; --topbar-h: 0px; }
 
   .app { flex-direction: row; }
 
@@ -301,7 +348,7 @@ table { border-collapse: collapse; width: 100%; }
     font-weight: 700;
     letter-spacing: .1em;
     text-transform: uppercase;
-    color: var(--faint);
+    color: var(--muted);
   }
 
   .sidebar__nav { display: flex; flex-direction: column; gap: 3px; }
@@ -337,7 +384,7 @@ table { border-collapse: collapse; width: 100%; }
     padding: 12px;
     background: var(--surface-2);
   }
-  .sidebar__card .label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .09em; color: var(--faint); font-weight: 700; }
+  .sidebar__card .label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); font-weight: 700; }
   .sidebar__card .value { font-size: 19px; font-weight: 700; letter-spacing: -.03em; margin-top: 3px; }
 
   .pagehead { padding-top: 26px; }

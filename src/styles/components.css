@@ -62,6 +62,7 @@
 /* ---------- fields ---------- */
 .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .field__label {
+  display: block;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: .02em;
@@ -85,7 +86,7 @@
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
-.input::placeholder, .textarea::placeholder { color: var(--faint); }
+.input::placeholder, .textarea::placeholder { color: var(--muted); }
 .textarea { min-height: 84px; resize: vertical; line-height: 1.45; }
 .input--num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .input--err { border-color: var(--danger); }
@@ -166,6 +167,9 @@
 }
 .chiprow::-webkit-scrollbar { display: none; }
 
+/* inside an already full-bleed parent the negative margin double-cancels */
+.chiprow--flush { margin: 0; padding: 0; }
+
 .chip {
   flex: none;
   min-height: 34px;
@@ -218,6 +222,8 @@
   align-items: center;
   gap: 10px;
 }
+/* rows keep their own radius out of the card corners */
+.card--clip { overflow: hidden; }
 
 /* ---------- badges / pills ---------- */
 .pill {
@@ -269,7 +275,7 @@
   font-weight: 700;
   letter-spacing: .07em;
   text-transform: uppercase;
-  color: var(--faint);
+  color: var(--muted);
   padding: 10px 14px;
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
@@ -298,6 +304,15 @@
 .bar--warn span { background: #d99a17; }
 .bar--danger span { background: var(--danger); }
 
+/* ---------- stock tone scale ---------- */
+/* One scale wherever stock is printed, so a product never reads two ways.
+   Only the critical tier is loud: in a shop where most lines sit under the
+   reorder point, an alarm that fires on everything stops meaning anything. */
+.stocktier { color: var(--muted); }
+.stocktier.is-low { color: var(--warn); font-weight: 500; }
+.stocktier.is-critical,
+.stocktier.is-out { color: var(--danger); font-weight: 700; }
+
 /* ---------- empty ---------- */
 .empty {
   display: flex;
@@ -318,6 +333,7 @@
 .empty__title { font-weight: 650; letter-spacing: -.02em; }
 .empty__desc { font-size: 13.5px; color: var(--muted); max-width: 34ch; }
 .empty__action { margin-top: 8px; }
+.empty--tight { padding: 26px 18px; }
 
 /* ---------- modal + sheet ---------- */
 .layer {
@@ -444,7 +460,7 @@
 }
 .rowitem:last-child { border-bottom: 0; }
 .rowitem:hover { background: var(--surface-2); }
-.rowitem__main { min-width: 0; flex: 1; }
+.rowitem__main { min-width: 0; flex: 1; text-align: left; }
 .rowitem__title {
   font-weight: 600;
   letter-spacing: -.015em;
