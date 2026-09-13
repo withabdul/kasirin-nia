@@ -1,0 +1,153 @@
+/* ==========================================================================
+   React-specific bits: loading, error boundary, form validation
+   ========================================================================== */
+
+/* ---------- inline spinner ---------- */
+.spin {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  opacity: .8;
+  animation: spin .7s linear infinite;
+  flex: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.btn .spin { width: 16px; height: 16px; }
+
+/* ---------- skeletons ---------- */
+.skel {
+  border-radius: var(--r-sm);
+  background: linear-gradient(90deg, var(--bg-2) 25%, var(--surface-2) 37%, var(--bg-2) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+.skel-tile { height: 108px; border-radius: var(--r); }
+.skel-row { height: 52px; }
+
+.grid-skel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0 var(--pad) 16px;
+  max-width: 1360px;
+  margin: 0 auto;
+}
+@media (min-width: 560px) { .grid-skel { grid-template-columns: repeat(3, 1fr); gap: 12px; } }
+@media (min-width: 760px) { .grid-skel { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 1360px) { .grid-skel { grid-template-columns: repeat(5, 1fr); } }
+
+/* ---------- error boundary ---------- */
+.errpage {
+  min-height: 60dvh;
+  display: grid;
+  place-items: center;
+  padding: 40px 20px;
+}
+.errpage__box {
+  max-width: 44ch;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+.errpage__mark {
+  width: 46px; height: 46px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.errpage__title { font-size: 18px; font-weight: 700; letter-spacing: -.03em; }
+.errpage__msg {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  width: 100%;
+  text-align: left;
+  word-break: break-word;
+}
+
+/* ---------- responsive visibility ---------- */
+.only-desktop { display: none !important; }
+@media (min-width: 760px) {
+  .only-mobile { display: none !important; }
+  .only-desktop { display: block !important; }
+}
+
+/* ---------- print: struk only ---------- */
+@media print {
+  body * { visibility: hidden !important; }
+  .layer__panel, .layer__panel * { visibility: visible !important; }
+  .layer__head, .layer__foot { display: none !important; }
+  .layer__panel {
+    position: absolute;
+    inset: 0 auto auto 0;
+    box-shadow: none;
+    max-height: none;
+    border-radius: 0;
+  }
+  .receipt { font-size: 12px; }
+  .receipt__foot button { display: none !important; }
+}
+
+/* ---------- misc ---------- */
+.form-note {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  padding: 11px 12px;
+  border-radius: var(--r-sm);
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.form-note .ico { width: 17px; height: 17px; flex: none; margin-top: 1px; }
+
+.taginput {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 7px 9px;
+  min-height: 44px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  align-items: center;
+}
+.taginput:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.taginput input {
+  flex: 1 1 100px;
+  min-width: 90px;
+  border: 0;
+  outline: none;
+  min-height: 28px;
+  background: none;
+}
+.tagpill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 99px;
+  background: var(--bg-2);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.tagpill button { display: grid; place-items: center; color: var(--muted); }
+.tagpill button:hover { color: var(--danger); }
+.tagpill .ico { width: 13px; height: 13px; }
+
+/* mobile: give the last cards room above the cart bar */
+@media (max-width: 1099px) {
+  .pgrid { padding-bottom: 96px; }
+}
