@@ -63,6 +63,29 @@ bun --bun run dev              # http://localhost:3000
 `bun run db:seed --force` untuk reset data contoh.
 Build + jalankan mode produksi lokal: `bun run build && bun run start`.
 
+### Katalog
+
+Isi katalog berasal dari catatan stok tulis tangan pemilik toko, di-transkrip ke
+`src/db/import-inventory.ts` (79 produk, 9 seksi rak, 426 pcs).
+
+```bash
+bun run db:import-inventory --dry   # lihat ringkasan, tidak menulis
+bun run db:import-inventory         # ganti katalog dengan isi catatan
+```
+
+Kategori = nama rak/seksi persis seperti di catatan (Rak Putar 1, Di Atas Meja,
+Rak I/II, Rak Putar 2, Di Atas Etalase, Rak Gantung, Rak Susun (Rak III),
+Rak Lain-lain), karena begitulah stok ditata fisik. Nama produk sudah memuat
+jenisnya, jadi kasir dapat dua petunjuk: "Gelang Misora Serut" di "Rak Putar 1".
+
+Angka dalam tanda kurung di catatan = **jumlah stok**, bukan harga. Harga hanya
+tertulis untuk dua item (Kaos Kaki 12.000 dan 10.000); sisanya `0` dan diisi
+lewat Katalog — bukan ditebak.
+
+`db:seed` masih ada untuk data demo (kedai kopi) kalau butuh contoh transaksi.
+Import inventory memakai `DELETE` bukan `TRUNCATE CASCADE`, supaya riwayat
+transaksi lama tetap tersimpan (nama produk di `order_items` tidak hilang).
+
 ### DATABASE_URL
 
 Postgres-nya yang sudah jalan di server ini (`postgres`, PG18, docker network
