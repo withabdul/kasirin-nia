@@ -27,7 +27,7 @@ const PRODUCTS = [
   { sku: 'SN-001', name: 'Donat Gula', category: 'Snack', price: 12000, cost: 5000, stock: 28, unit: 'pcs' },
   { sku: 'SN-002', name: 'Keripik Kentang', category: 'Snack', price: 15000, cost: 8000, stock: 0, unit: 'pcs' },
   { sku: 'SN-003', name: 'Air Mineral 600ml', category: 'Snack', price: 6000, cost: 2500, stock: 60, unit: 'botol' },
-  { sku: 'MR-001', name: 'Tumbler Kasirin', category: 'Merch', price: 85000, cost: 45000, stock: 9, unit: 'pcs', active: false },
+  { sku: 'MR-001', name: 'Tumbler Rontjeu', category: 'Merch', price: 85000, cost: 45000, stock: 9, unit: 'pcs', active: false },
 ]
 
 const CUSTOMERS = [

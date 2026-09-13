@@ -2,7 +2,9 @@ import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 
 import { Field, Layer, useConfirm } from '../components/Layer.tsx'
+import { ExportCsvButton } from '../components/ExportCsv.tsx'
 import { useToast } from '../components/Toast.tsx'
+import { csvDate, csvFilename, joinTags, SEPARATORS } from '../lib/csv.ts'
 import { dateLong, initials, relDay, rp } from '../lib/format.ts'
 import { Icon } from '../lib/icons.tsx'
 import type { Customer, CustomerInput } from '../lib/types.ts'
@@ -101,6 +103,64 @@ function CrmPage() {
               {customers.length} pelanggan · {visible.length} tampil
             </p>
           </div>
+          <ExportCsvButton
+            title="Ekspor pelanggan"
+            options={[
+              {
+                key: 'scope',
+                label: 'Data yang diekspor',
+                defaultValue: 'shown',
+                choices: [
+                  { value: 'shown', label: `Yang tampil (${visible.length})` },
+                  { value: 'all', label: `Semua pelanggan (${customers.length})` },
+                ],
+              },
+              {
+                key: 'separator',
+                label: 'Pemisah kolom',
+                defaultValue: ',',
+                choices: SEPARATORS,
+              },
+            ]}
+            build={(v) => {
+              const list = v.scope === 'shown' ? visible : customers
+              return {
+                filename: csvFilename('pelanggan'),
+                headers: [
+                  'Nama',
+                  'Nomor HP',
+                  'Email',
+                  'Tier',
+                  'Tag',
+                  'Total Order',
+                  'Total Belanja (Rp)',
+                  'Rata-rata / Transaksi (Rp)',
+                  'Kunjungan Terakhir',
+                  'Pelanggan Sejak',
+                  'Catatan Terakhir',
+                ],
+                rows: list.map((c) => [
+                  c.name,
+                  c.phone,
+                  c.email,
+                  c.tier,
+                  joinTags(c.tags),
+                  c.orderCount,
+                  c.totalSpent,
+                  c.orderCount
+                    ? Math.round(c.totalSpent / c.orderCount)
+                    : 0,
+                  c.lastOrderAt ? csvDate(c.lastOrderAt) : '',
+                  csvDate(c.createdAt),
+                  c.notes[0]?.text ?? '',
+                ]),
+                summary:
+                  v.scope === 'shown'
+                    ? `${visible.length} pelanggan hasil filter`
+                    : `${customers.length} pelanggan`,
+              }
+            }}
+          />
           <button
             className="btn btn--primary"
             type="button"

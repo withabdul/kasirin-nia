@@ -2,7 +2,9 @@ import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 
 import { Field, Layer, useConfirm } from '../components/Layer.tsx'
+import { ExportCsvButton } from '../components/ExportCsv.tsx'
 import { useToast } from '../components/Toast.tsx'
+import { csvFilename, SEPARATORS } from '../lib/csv.ts'
 import { rp } from '../lib/format.ts'
 import { Icon } from '../lib/icons.tsx'
 import type { Product, ProductInput } from '../lib/types.ts'
@@ -180,6 +182,62 @@ function KatalogPage() {
               {products.length} produk · {visible.length} tampil
             </p>
           </div>
+          <ExportCsvButton
+            title="Ekspor katalog"
+            options={[
+              {
+                key: 'scope',
+                label: 'Data yang diekspor',
+                defaultValue: 'shown',
+                choices: [
+                  { value: 'shown', label: `Yang tampil (${visible.length})` },
+                  { value: 'all', label: `Semua produk (${products.length})` },
+                ],
+              },
+              {
+                key: 'separator',
+                label: 'Pemisah kolom',
+                defaultValue: ',',
+                choices: SEPARATORS,
+              },
+            ]}
+            build={(v) => {
+              const list = v.scope === 'shown' ? visible : products
+              return {
+                filename: csvFilename('katalog'),
+                headers: [
+                  'SKU',
+                  'Nama Produk',
+                  'Kategori',
+                  'Harga Jual (Rp)',
+                  'Harga Modal (Rp)',
+                  'Margin (Rp)',
+                  'Margin (%)',
+                  'Stok',
+                  'Satuan',
+                  'Status',
+                ],
+                rows: list.map((p) => [
+                  p.sku,
+                  p.name,
+                  p.category,
+                  p.price,
+                  p.cost,
+                  p.price - p.cost,
+                  p.price > 0
+                    ? Number((((p.price - p.cost) / p.price) * 100).toFixed(1))
+                    : 0,
+                  p.stock,
+                  p.unit,
+                  p.active ? 'Aktif' : 'Nonaktif',
+                ]),
+                summary:
+                  v.scope === 'shown'
+                    ? `${visible.length} produk hasil filter`
+                    : `${products.length} produk di katalog`,
+              }
+            }}
+          />
           <button className="btn btn--primary" type="button" onClick={openNew}>
             <Icon name="plus" />
             Produk baru

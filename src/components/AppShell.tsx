@@ -76,6 +76,15 @@ export function AppShell({
             <Icon name="gear" className="ico--sm" />
             Pengaturan toko
           </button>
+          <a
+            className="brandline"
+            href="https://github.com/withabdul/kasirin-nia"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <strong>Rontjeu POS</strong>
+            <span>v1.0</span>
+          </a>
         </div>
       </aside>
 

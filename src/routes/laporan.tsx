@@ -1,20 +1,33 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 
-import { dateTime, num, relDay, rp } from '../lib/format.ts'
+import { ExportCsvButton } from '../components/ExportCsv.tsx'
+import { csvDate, csvFilename, SEPARATORS } from '../lib/csv.ts'
+import { dateTime, dayKey, num, relDay, rp } from '../lib/format.ts'
 import { Icon } from '../lib/icons.tsx'
-import { getStats } from '../server/orders.ts'
+import { getStats, listOrders } from '../server/orders.ts'
 import { getSettings } from '../server/settings.ts'
+
+const RANGES = [
+  { value: 'today', label: 'Hari ini' },
+  { value: '7', label: '7 hari terakhir' },
+  { value: '30', label: '30 hari terakhir' },
+  { value: 'all', label: 'Semua transaksi' },
+]
 
 export const Route = createFileRoute('/laporan')({
   loader: async () => {
-    const [stats, settings] = await Promise.all([getStats(), getSettings()])
-    return { stats, settings }
+    const [stats, settings, orders] = await Promise.all([
+      getStats(),
+      getSettings(),
+      listOrders(),
+    ])
+    return { stats, settings, orders }
   },
   component: LaporanPage,
 })
 
 function LaporanPage() {
-  const { stats, settings } = Route.useLoaderData()
+  const { stats, settings, orders } = Route.useLoaderData()
 
   const maxSeries = Math.max(1, ...stats.series.map((s) => s.total))
   const maxTop = Math.max(1, ...stats.top.map((t) => t.qty))
@@ -23,10 +36,134 @@ function LaporanPage() {
   return (
     <div className="view is-active">
       <div className="pagehead">
-        <h1 className="pagehead__title">Laporan</h1>
-        <p className="pagehead__desc">
-          Ringkasan {settings.storeName} · {settings.outlet}
-        </p>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-end',
+            gap: 12,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <h1 className="pagehead__title">Laporan</h1>
+            <p className="pagehead__desc">
+              Ringkasan {settings.storeName} · {settings.outlet}
+            </p>
+          </div>
+          <ExportCsvButton
+            title="Ekspor transaksi"
+            options={[
+              {
+                key: 'range',
+                label: 'Rentang waktu',
+                defaultValue: '7',
+                choices: RANGES,
+              },
+              {
+                key: 'detail',
+                label: 'Baris',
+                defaultValue: 'order',
+                choices: [
+                  { value: 'order', label: 'Satu baris per transaksi' },
+                  { value: 'item', label: 'Satu baris per item' },
+                ],
+                hint: 'Mode per item enak buat analisis produk.',
+              },
+              {
+                key: 'separator',
+                label: 'Pemisah kolom',
+                defaultValue: ',',
+                choices: SEPARATORS,
+              },
+            ]}
+            build={(v) => {
+              const todayK = dayKey(new Date())
+              const span =
+                v.range === '7' ? 7 : v.range === '30' ? 30 : null
+              const list = orders.filter((o) => {
+                if (v.range === 'all') return true
+                if (v.range === 'today') return dayKey(o.createdAt) === todayK
+                return (
+                  Date.now() - new Date(o.createdAt).getTime() <=
+                  (span as number) * 86_400_000
+                )
+              })
+              const rangeLabel =
+                RANGES.find((r) => r.value === v.range)?.label ?? ''
+
+              if (v.detail === 'item') {
+                const rows: (string | number)[][] = []
+                for (const o of list) {
+                  for (const it of o.items) {
+                    rows.push([
+                      o.code,
+                      csvDate(o.createdAt),
+                      it.sku,
+                      it.name,
+                      it.qty,
+                      it.price,
+                      it.qty * it.price,
+                      o.customerName ?? '',
+                      o.payment,
+                    ])
+                  }
+                }
+                return {
+                  filename: csvFilename('transaksi-item'),
+                  headers: [
+                    'Kode',
+                    'Waktu',
+                    'SKU',
+                    'Produk',
+                    'Qty',
+                    'Harga Satuan (Rp)',
+                    'Jumlah (Rp)',
+                    'Pelanggan',
+                    'Metode',
+                  ],
+                  rows,
+                  summary: `${list.length} transaksi · ${rangeLabel}`,
+                }
+              }
+
+              return {
+                filename: csvFilename('transaksi'),
+                headers: [
+                  'Kode',
+                  'Tanggal',
+                  'Jam',
+                  'Pelanggan',
+                  'Metode',
+                  'Item',
+                  'Subtotal (Rp)',
+                  'Diskon (Rp)',
+                  'Total (Rp)',
+                  'Dibayar (Rp)',
+                  'Kembalian (Rp)',
+                  'Catatan',
+                ],
+                rows: list.map((o) => {
+                  const [d, t] = csvDate(o.createdAt).split(' ')
+                  return [
+                    o.code,
+                    d,
+                    t,
+                    o.customerName ?? '',
+                    o.payment,
+                    o.items.map((i) => `${i.qty}x ${i.name}`).join('; '),
+                    o.subtotal,
+                    o.discount,
+                    o.total,
+                    o.paid,
+                    Math.max(0, o.paid - o.total),
+                    o.note,
+                  ]
+                }),
+                summary: `${list.length} transaksi · ${rangeLabel}`,
+              }
+            }}
+          />
+        </div>
       </div>
 
       <div className="tiles">

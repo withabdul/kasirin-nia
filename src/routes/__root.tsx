@@ -23,11 +23,11 @@ export const Route = createRootRoute({
           'width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5',
       },
       { name: 'theme-color', content: '#f6f4f0' },
-      { title: 'Kasirin — POS & CRM' },
+      { title: 'Rontjeu POS' },
       {
         name: 'description',
         content:
-          'Aplikasi kasir ringan: katalog produk, transaksi, dan CRM pelanggan.',
+          'Rontjeu POS — aplikasi kasir ringan: katalog produk, transaksi, dan CRM pelanggan.',
       },
     ],
     links: [{ rel: 'stylesheet', href: appCss }],

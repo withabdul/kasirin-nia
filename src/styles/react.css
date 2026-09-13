@@ -98,6 +98,27 @@
   .receipt__foot button { display: none !important; }
 }
 
+/* ---------- product line in the sidebar ---------- */
+.brandline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 11.5px;
+  color: var(--faint);
+  letter-spacing: .02em;
+}
+.brandline strong {
+  font-weight: 700;
+  color: var(--ink-2);
+  letter-spacing: -.01em;
+}
+.brandline span { font-family: var(--mono); }
+.brandline:hover strong { color: var(--accent-ink); }
+
 /* ---------- misc ---------- */
 .form-note {
   display: flex;

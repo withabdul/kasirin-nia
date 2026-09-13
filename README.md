@@ -1,8 +1,10 @@
-# Kasirin — POS & CRM ringan
+# Rontjeu POS
 
-Aplikasi kasir satu toko: katalog produk (CRUD), transaksi dengan struk, dan CRM
-pelanggan sederhana. Mobile-first — di layar kecil navigasinya bottom nav, dan
-keranjang muncul sebagai bar di atas nav.
+Aplikasi kasir satu toko: katalog produk (CRUD), transaksi dengan struk, CRM
+pelanggan sederhana, dan ekspor CSV. Mobile-first — di layar kecil navigasinya
+bottom nav, dan keranjang muncul sebagai bar di atas nav.
+
+**Live:** https://pos-nia.berkoding.com
 
 **Stack:** TanStack Start (React 19 + Vite 8) · TanStack Router (file-based) ·
 Drizzle ORM · PostgreSQL · Bun · Nitro. Tanpa Tailwind — CSS ditulis tangan.
@@ -29,6 +31,25 @@ Drizzle ORM · PostgreSQL · Bun · Nitro. Tanpa Tailwind — CSS ditulis tangan
 - Penjualan hari ini, rata-rata per transaksi, estimasi margin, total penjualan
 - Grafik 7 hari, produk terlaris, peringatan stok menipis, transaksi terakhir
 
+**Ekspor CSV** — tombol "Ekspor CSV" ada di Katalog, Pelanggan, dan Laporan.
+Semua ekspor lewat layer pratinjau: pilih opsi dulu, lihat jumlah baris + 3 baris
+pertama, baru download.
+
+| Halaman | Isi | Opsi |
+|---|---|---|
+| Katalog | SKU, nama, kategori, harga, modal, margin Rp/%, stok, satuan, status | yang tampil / semua produk, pemisah kolom |
+| Pelanggan | nama, kontak, tier, tag, jumlah order, total belanja, rata-rata, kunjungan terakhir, catatan | yang tampil / semua pelanggan, pemisah kolom |
+| Laporan | transaksi (kode, tanggal, jam, pelanggan, metode, item, subtotal, diskon, total, dibayar, kembalian) **atau** per-item (SKU, produk, qty, harga, jumlah) | rentang (hari ini / 7 / 30 hari / semua), baris per transaksi atau per item, pemisah kolom |
+
+Detail teknis ekspor:
+- Angka ditulis polos (`22000`, bukan `Rp22.000`) supaya bisa langsung dijumlah
+  di spreadsheet; satuan rupiah ada di nama kolomnya.
+- UTF-8 BOM disertakan agar Excel di Windows tidak merusak karakter Indonesia.
+- Pemisah kolom bisa dipilih: koma (standar) atau titik koma (Excel dengan
+  regional Indonesia).
+- Nama file: `rontjeu-transaksi-2026-09-13.csv`.
+- Kutipan mengikuti RFC 4180, line ending CRLF.
+
 ## Jalanin
 
 ```bash
@@ -48,7 +69,7 @@ Postgres-nya yang sudah jalan di server ini (`postgres`, PG18, docker network
 `traefik-net`) — host diakses lewat IP container karena portnya tidak di-publish:
 
 ```
-DATABASE_URL="postgresql://kasirin:<password>@172.18.0.3:5432/kasirin"
+DATABASE_URL="postgresql://rontjeu:<password>@172.18.0.3:5432/rontjeu"
 ```
 
 Kalau container di-recreate IP-nya bisa berubah — ambil ulang dengan
@@ -57,12 +78,11 @@ atau publish portnya (`127.0.0.1:5433:5432`) supaya bisa pakai `localhost`.
 
 ## Deploy (Docker + Traefik)
 
-**Live:** https://pos-nia.berkoding.com (Traefik → container `kasirin:3000`, TLS via
-Cloudflare di depan origin).
+**Live:** https://pos-nia.berkoding.com (Traefik → container `rontjeu-pos:3000`,
+TLS via Cloudflare di depan origin).
 
-Repo ini nempel ke network Traefik yang sudah ada (`traefik-net`, external) dan
-mendapat TLS lewat certresolver `letsencrypt` — pola labelnya sama dengan service
-lain di server.
+Nempel ke network Traefik yang sudah ada (`traefik-net`, external) dan dapat TLS
+lewat certresolver `letsencrypt` — pola labelnya sama dengan service lain di server.
 
 ```bash
 cp .env.example .env      # DATABASE_URL + DOMAIN
@@ -70,13 +90,13 @@ docker compose up -d --build
 ```
 
 Karena app-nya ikut masuk `traefik-net`, `DATABASE_URL` cukup pakai hostname
-container Postgres: `postgresql://kasirin:<password>@postgres:5432/kasirin`.
+container Postgres: `postgresql://rontjeu:<password>@postgres:5432/rontjeu`.
 
 Ganti `Host(...)` di `docker-compose.yml` kalau domainnya beda. Cek statusnya:
 
 ```bash
 docker compose ps
-docker logs kasirin --tail 20
+docker logs rontjeu-pos --tail 20
 curl -sS -o /dev/null -w '%{http_code}\n' https://pos-nia.berkoding.com/kasir
 ```
 
@@ -92,8 +112,9 @@ src/
   db/          schema Drizzle + seed
   server/      server functions (products, customers, orders, settings, shell)
   routes/      __root, index(→kasir), kasir, katalog, pelanggan, laporan
-  components/  AppShell (sidebar + bottom nav), Layer (modal/sheet), Toast
-  lib/         types, format (Intl id-ID, TZ Asia/Jakarta), icons (inline SVG)
+  components/  AppShell (sidebar + bottom nav), Layer (modal/sheet), Toast,
+               ExportCsv (layer pratinjau + download)
+  lib/         types, format (Intl id-ID, TZ Asia/Jakarta), csv, icons (inline SVG)
   styles/      base / components / views / react — CSS custom properties
 ```
 
@@ -102,4 +123,5 @@ Catatan teknis:
   dan hydration menghasilkan string identik.
 - Harga disimpan sebagai integer rupiah; nomor struk dari kolom `serial`.
 - Checkout pakai transaksi + `SELECT … FOR UPDATE` supaya stok tidak bentrok.
+- Ekspor CSV dibikin di client dari data loader — tidak ada endpoint tambahan.
 - `src/routes/routeTree.gen.ts` di-generate oleh TanStack Router CLI.

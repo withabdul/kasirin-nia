@@ -1,7 +1,8 @@
 services:
-  kasirin:
+  rontjeu-pos:
     build: .
-    container_name: kasirin
+    image: rontjeu-pos
+    container_name: rontjeu-pos
     restart: unless-stopped
     environment:
       - NODE_ENV=production
@@ -14,10 +15,10 @@ services:
       - traefik-net
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.kasirin.rule=Host(`pos-nia.berkoding.com`)"
-      - "traefik.http.routers.kasirin.entrypoints=websecure"
-      - "traefik.http.routers.kasirin.tls.certresolver=letsencrypt"
-      - "traefik.http.services.kasirin.loadbalancer.server.port=3000"
+      - "traefik.http.routers.rontjeu.rule=Host(`pos-nia.berkoding.com`)"
+      - "traefik.http.routers.rontjeu.entrypoints=websecure"
+      - "traefik.http.routers.rontjeu.tls.certresolver=letsencrypt"
+      - "traefik.http.services.rontjeu.loadbalancer.server.port=3000"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/kasir >/dev/null 2>&1 || exit 1"]
       interval: 30s

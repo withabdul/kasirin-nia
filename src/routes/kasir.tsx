@@ -17,7 +17,7 @@ import { checkout, deleteOrder } from '../server/orders.ts'
 import { listProducts } from '../server/products.ts'
 import { getSettings } from '../server/settings.ts'
 
-const CART_KEY = 'kasirin.cart.v1'
+const CART_KEY = 'rontjeu.cart.v1'
 const PAYMENTS = ['Tunai', 'QRIS', 'Transfer'] as const
 
 export const Route = createFileRoute('/kasir')({
